@@ -4,21 +4,37 @@ import {
   ProductVariantPrice,
   RequestContext,
   TransactionalConnection,
+  Channel
 } from "@vendure/core";
 import { ChannelPrice } from "../types";
 
 @Injectable()
 export class ChannelPricesService {
-  constructor(private connection: TransactionalConnection) {}
+  constructor(private connection: TransactionalConnection) { }
 
   async getChannelPrices(
     ctx: RequestContext,
     productVariantId: ID,
   ): Promise<ChannelPrice[]> {
-    return this.connection
+    const results = await this.connection
       .getRepository(ctx, ProductVariantPrice)
       .createQueryBuilder("pvp")
-      .where("pvp.variant = :productVariantId", { productVariantId })
-      .getMany() as Promise<ChannelPrice[]>;
+      .leftJoinAndMapOne(
+        "pvp.channelData",
+        Channel,
+        "channel",
+        "channel.id = pvp.channelId"
+      )
+      .where("pvp.variantId = :productVariantId", { productVariantId })
+      .getMany();
+
+    return results.map((pvp: any) => ({
+      price: pvp.price,
+      currencyCode: pvp.currencyCode,
+      channel: pvp.channelData,
+      createdAt: pvp.createdAt,
+      updatedAt: pvp.updatedAt,
+      customFields: pvp.customFields,
+    })) as ChannelPrice[];
   }
 }

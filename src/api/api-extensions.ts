@@ -4,7 +4,7 @@ const channelPricesShopApiExtensions = gql`
   type ChannelPrice {
     price: Money!
     currencyCode: CurrencyCode!
-    channelId: ID!
+    channel: Channel!
     customFields: JSON
     createdAt: DateTime!
     updatedAt: DateTime!
